@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="text-center py-5">
+    <h6 class="text-primary fw-bold text-uppercase mb-3" style="letter-spacing: 0.4em;">Operational Framework</h6>
+    <h1 class="display-2 fw-800 text-uppercase tracking-tighter mb-4">Task Management<br>System</h1>
+    <p class="lead text-muted mx-auto" style="max-width: 600px;">ניהול משימות מתקדם לפי צוות ותפקיד בממשק Core System המאובטח.</p>
+
+    <div class="mt-5 d-flex justify-content-center gap-3">
+        {% if user.is_authenticated %}
+            <a href="{% url 'task_list' %}" class="btn btn-primary px-5">Enter Registry</a>
+        {% else %}
+            <a href="{% url 'login' %}" class="btn btn-primary px-5">Login</a>
+            <a href="{% url 'register' %}" class="btn btn-outline-light px-5">Register</a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

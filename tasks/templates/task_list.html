@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-end mb-4">
+    <div>
+        <h1 class="display-5 fw-bold mb-0" style="color: #1a2234; letter-spacing: 2px;">TASK REGISTRY</h1>
+        <p class="text-secondary small text-uppercase">Operational Database</p>
+    </div>
+
+    {% if request.user.profile.role == 'manager' %}
+    <a href="{% url 'create_task' %}" class="btn btn-primary px-4">CREATE RECORD +</a>
+    {% endif %}
+</div>
+
+<div class="card p-4 mb-5 border-0 shadow-sm">
+    {% if not show_filters %}
+        <a href="?show_filters=1" class="text-decoration-none text-primary fw-bold small">🔍 OPEN FILTERS</a>
+    {% endif %}
+
+    {% if show_filters %}
+    <form method="get" class="row g-3 align-items-end">
+        <input type="hidden" name="show_filters" value="1">
+
+        <div class="col-md-3">
+            <label class="form-label">Status</label>
+            <select name="status" class="form-select text-uppercase small">
+                <option value="all">All</option>
+                <option value="new" {% if status == 'new' %}selected{% endif %}>New</option>
+                <option value="in_progress" {% if status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                <option value="done" {% if status == 'done' %}selected{% endif %}>Done</option>
+            </select>
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label">Assigned Worker</label>
+            <select name="assigned" class="form-select text-uppercase small">
+                <option value="">All</option>
+                <option value="yes" {% if assigned == 'yes' %}selected{% endif %}>Assigned</option>
+                <option value="no" {% if assigned == 'no' %}selected{% endif %}>Unassigned</option>
+            </select>
+        </div>
+
+        <div class="col-md-auto">
+            <button type="submit" class="btn btn-outline-light px-4">FILTER</button>
+            <a href="{% url 'task_list' %}" class="btn btn-link text-secondary text-decoration-none small">CLEAR</a>
+        </div>
+    </form>
+    {% endif %}
+</div>
+
+<div class="card overflow-hidden">
+    <table class="table mb-0">
+        <thead>
+            <tr>
+                <th>Command</th>
+                <th>Operator</th>
+                <th>Status</th>
+                <th>Title / Assignment</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for task in tasks %}
+            <tr class="align-middle">
+                <td>
+                    <div class="d-flex gap-2">
+                        {% if request.user.profile.role == 'manager' %}
+                            {% if not task.assigned_to %}
+                                <a href="{% url 'edit_task' task.id %}" class="btn btn-sm btn-outline-light border-secondary opacity-75">MODIFY</a>
+                                <a href="{% url 'delete_task' task.id %}"
+                                   class="btn btn-sm btn-outline-danger"
+                                   onclick="return confirm('Delete this task?');">DELETE</a>
+                            {% else %}
+                                <span class="text-muted small opacity-50">ASSIGNED</span>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                </td>
+
+                <td class="text-secondary fw-semibold small">
+                    {% if task.assigned_to %}
+                        {{ task.assigned_to.username }}
+                    {% else %}
+                        Available
+                        {% if request.user.profile.role == 'worker' %}
+                            <form method="post" action="{% url 'take_task' task.id %}" class="d-inline ms-2">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-link text-primary p-0 text-decoration-none">TAKE</button>
+                            </form>
+                        {% endif %}
+                    {% endif %}
+                </td>
+
+                <td>
+                    <span class="badge bg-dark border border-secondary text-secondary opacity-75 uppercase">
+                        {{ task.status|upper }}
+                    </span>
+
+                    {% if request.user.profile.role == 'worker' and task.status != 'done' and task.assigned_to == request.user %}
+                        <form method="post" action="{% url 'change_status' task.id %}" class="mt-1">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-outline-primary py-0" style="font-size: 10px;">UPDATE STATUS</button>
+                        </form>
+                    {% endif %}
+                </td>
+
+                <td>
+                    <div class="fw-bold text-white">{{ task.title }}</div>
+                    <div class="text-muted small" style="font-size: 0.65rem;">ID-{{ task.id }}</div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4" class="text-center py-5 text-muted small">NO RECORDS IN REGISTRY</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
